@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import "../styles/components/ProcessList.css";
 
 interface ProcessInfo {
   pid: number;
@@ -8,7 +9,7 @@ interface ProcessInfo {
 }
 
 export default function ProcessList({ processes }: { processes: ProcessInfo[] }) {
-  if (!processes.length) return <div>Scanning processes...</div>;
+  if (!processes.length) return <div className="process-list__empty">Scanning processes...</div>;
 
   const handleKill = async (pid: number, name: string) => {
     const confirmed = window.confirm(`Are you certain you want to terminate ${name} (PID: ${pid})?`);
@@ -26,16 +27,21 @@ export default function ProcessList({ processes }: { processes: ProcessInfo[] })
   };
 
   return (
-    <ul>
+    <ul className="process-list">
       {processes.map((p) => (
-        <li key={p.pid} style={{ display: "flex", gap: 12 }}>
-          <span style={{ minWidth: 220 }}>{p.name}</span>
-          <span style={{ minWidth: 80 }}>PID: {p.pid}</span>
-          <span>CPU: {p.cpuUsage.toFixed(1)}%</span>
+        <li key={p.pid} className="process-list__item">
+          <div className="process-list__meta">
+            <span className="process-list__name">{p.name}</span>
+            <span className="process-list__pid">PID {p.pid}</span>
+          </div>
+          <div className="process-list__usage">
+            <span>CPU {p.cpuUsage.toFixed(1)}%</span>
+            <span>MEM {(p.memoryUsage / 1024 / 1024).toFixed(0)} MB</span>
+          </div>
            <button 
             onClick={() => handleKill(p.pid, p.name)}
-            style={{ marginLeft: "auto", color: "red", background: "none", border: "1px solid red", cursor: "pointer" }}>
-            TERMINATE
+            className="process-list__button">
+            Terminate
           </button>
         </li>
       ))}
