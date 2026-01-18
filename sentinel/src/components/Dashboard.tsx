@@ -54,30 +54,48 @@ export default function Dashboard() {
   const timeString = `${hours}h ${minutes}m ${seconds}s`;
 
   return (
-    <div className="containerStyle">
-      <h1 style={{ color: "#00ff00" }}>Sentinel</h1>
+    <div className="dashboard">
+      <header className="dashboard__header">
+        <div>
+          <p className="dashboard__eyebrow">System Monitor</p>
+          <h1>Sentinel</h1>
+        </div>
+        <div className="dashboard__uptime">
+          <span>Uptime</span>
+          <strong>{timeString}</strong>
+        </div>
+      </header>
 
-      <div className="stat-card">
-        <p>CPU LOAD: {stats.cpuUsage.toFixed(1)}%</p>
-        <ProgressBar percent={stats.cpuUsage} color="#ff4444" />
-      </div>
+      <section className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-card__header">
+            <h2>CPU Load</h2>
+            <span className="stat-card__value">{stats.cpuUsage.toFixed(1)}%</span>
+          </div>
+          <ProgressBar percent={stats.cpuUsage} color="var(--accent-warn)" />
+          <p className="stat-card__hint">Realtime usage across all cores.</p>
+        </div>
 
-      <div className="stat-card" style={{ marginTop: "20px" }}>
-        <p>MEMORY USAGE: {memUsedPercent.toFixed(1)}%</p>
-        <ProgressBar percent={memUsedPercent} color="#4444ff" />
-        <small>
-          {(stats.usedMemory / 1024 / 1024 / 1024).toFixed(2)} /
-          {(stats.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB
-        </small>
-      </div>
+        <div className="stat-card">
+          <div className="stat-card__header">
+            <h2>Memory Usage</h2>
+            <span className="stat-card__value">{memUsedPercent.toFixed(1)}%</span>
+          </div>
+          <ProgressBar percent={memUsedPercent} color="var(--accent-cool)" />
+          <p className="stat-card__hint">
+            {(stats.usedMemory / 1024 / 1024 / 1024).toFixed(2)} /
+            {(stats.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB
+          </p>
+        </div>
 
-      <div className="stat-card">
-        <p>TIME PASSED SINCE LAST RESET: {timeString}</p>
-      </div>
-
-      <div className="stat-card">
-        <ProcessList processes={processes} />
-      </div>
+        <div className="stat-card stat-card--full">
+          <div className="stat-card__header">
+            <h2>Active Processes</h2>
+            <span className="stat-card__value">{processes.length}</span>
+          </div>
+          <ProcessList processes={processes} />
+        </div>
+      </section>
     </div>
   );
 }
