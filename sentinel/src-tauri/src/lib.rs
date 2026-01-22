@@ -3,6 +3,7 @@ use sysinfo::System;
 use serde::Serialize;
 use std::sync::Mutex;
 use tauri::State;
+use std::collections::VecDeque;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")] // This makes sure that we send the data of SystemStats as a camelCase to the Frontend
@@ -11,6 +12,9 @@ pub struct SystemStats {
     used_memory: u64,
     cpu_usage: f32,
     uptime: u64,
+    cpu_history: Vec<f32>,
+    disk_total: u64,
+    disk_used: u64,
 }
 
 #[derive(Serialize)]
@@ -24,20 +28,46 @@ pub struct ProcessInfo {
 
 pub struct AppState {
     pub sys: Mutex<System>,
+    pub cpu_history: Mutex<VecDeque<f32>>,
 }
 
-// Function that gets the stats of the device using Apps
 #[tauri::command]
 fn get_stats(state: State<'_, AppState>) -> SystemStats {
     let mut sys = state.sys.lock().unwrap();
+    let mut history = state.cpu_history.lock().unwrap();
+    let current_cpu = sys.global_cpu_usage();
+    let disks = sysinfo::Disks::new_with_refreshed_list();
+    
     sys.refresh_memory();
     sys.refresh_cpu_usage();
+
+    let main_disk = disks.iter().find(|d| {
+    // Check for Windows systems (C:) or Unix systems (/)
+    d.mount_point() == std::path::Path::new("/") || 
+    d.mount_point().to_string_lossy().contains("C:")
+    });
+
+    let (total, used) = if let Some(disk) = main_disk {
+        let t = disk.total_space();
+        let u = t - disk.available_space();
+        (t, u)
+    } else {
+        (0, 0) 
+    };
+
+    history.push_back(current_cpu);
+    if history.len() > 60 {
+        history.pop_front();
+    }
 
     SystemStats {
         total_memory: sys.total_memory(),
         used_memory: sys.used_memory(),
-        cpu_usage: sys.global_cpu_usage(),
+        cpu_usage: current_cpu,
         uptime: System::uptime(),
+        cpu_history: history.iter().cloned().collect(),
+        disk_total: total,
+        disk_used: used,
     }
 }
 
@@ -65,7 +95,7 @@ fn get_processes(state: State<'_, AppState>) -> Vec<ProcessInfo> {
 
 #[tauri::command]
 fn kill_process(state: State<'_, AppState>, pid: u32) -> Result<String, String> {
-    let mut sys = state.sys.lock().unwrap();
+    let sys = state.sys.lock().unwrap();
     
     // Convert our u32 PID into the sysinfo Pid type
     let target_pid = sysinfo::Pid::from(pid as usize);
@@ -87,6 +117,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(AppState {
             sys: Mutex::new(System::new_all()),
+            cpu_history: Mutex::new(VecDeque::from(vec![0.0; 60])),
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![get_stats, get_processes, kill_process])

@@ -11,6 +11,9 @@ interface SystemStats {
   usedMemory: number;
   cpuUsage: number;
   uptime: number;
+  cpuHistory: number[];
+  diskTotal: number;
+  diskUsed: number;
 }
 
 interface ProcessInfo {
