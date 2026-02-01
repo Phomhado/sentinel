@@ -56,6 +56,10 @@ export default function Dashboard() {
   const seconds = stats.uptime % 60;
   const timeString = `${hours}h ${minutes}m ${seconds}s`;
 
+  const diskUsedPercent = (stats.diskUsed / stats.diskTotal) * 100;
+  const diskTotalGB = (stats.diskTotal / 1024 / 1024 / 1024).toFixed(2);
+  const diskUsedGB = (stats.diskUsed / 1024 / 1024 / 1024).toFixed(2);
+
   return (
     <div className="dashboard">
       <header className="dashboard__header">
@@ -88,6 +92,18 @@ export default function Dashboard() {
           <p className="stat-card__hint">
             {(stats.usedMemory / 1024 / 1024 / 1024).toFixed(2)} /
             {(stats.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB
+          </p>
+        </div>
+
+         <div className="stat-card">
+          <div className="stat-card__header">
+            <h2>Disk Usage</h2>
+            <span className="stat-card__value">{diskUsedPercent.toFixed(1)}%</span>
+          </div>
+          <ProgressBar percent={diskUsedPercent} color="var(--accent-cool)" />
+          <p className="stat-card__hint">
+            {`${diskUsedGB} GB`} /
+            {`${diskTotalGB} GB`}
           </p>
         </div>
 
