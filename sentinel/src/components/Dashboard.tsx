@@ -37,7 +37,7 @@ export default function Dashboard() {
       setStats(statsData);
       setProcesses(procData);
     } catch (error) {
-      console.error("The Machine Spirit is unresponsive:", error);
+      console.error("The Machine Spirit is unresponsive, call a dedicated Magos. Error:", error);
     }
   };
 
